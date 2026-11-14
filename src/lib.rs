@@ -3,7 +3,7 @@
 //! cksk's own library half: status feeds plus the boards that render them -- all kept
 //! entirely display-server-free (no Wayland, no PAM), so a future web build can reuse them
 //! just as easily as `src/bin/cksk.rs` does. That binary is the only thing in this crate
-//! that turns a rendered board frame into the kiosk-socket wire protocol.
+//! that turns a rendered board frame into the Netpbm PAM images clck's kiosk socket takes.
 //!
 //! Boards are named for what they show, not for where they are displayed: the show rotates
 //! several of them (`show`), and each one owns its render behind the same `(state, size)`

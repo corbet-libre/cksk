@@ -1,6 +1,6 @@
 [package]
 name = "cksk"
-version = "0.1.14"
+version = "0.2.0"
 edition = "2021"
 license = "FSL-1.1-ALv2"
 description = "Server-monitor boards for a clck kiosk display: polls status sources, renders big-type status screens, streams frames to the display server"
@@ -18,9 +18,9 @@ name = "cksk"
 path = "src/bin/cksk.rs"
 
 [dependencies]
-# NO display-server dependency. cksk is a pure socket CLIENT of the clck kiosk display
-# protocol (nixlock implements the server side today) -- it speaks the wire protocol by
-# hand (src/bin/cksk.rs) and links no server code, no Wayland, and no PAM.
+# NO display-server dependency. cksk is a pure socket CLIENT of clck's kiosk display socket:
+# it writes Netpbm PAM images by hand (src/bin/cksk.rs) and links no server code, no
+# Wayland, and no PAM authentication.
 
 # CPU rendering: shapes (tiny-skia) + glyph rasterization (fontdue).
 # Pure-Rust stack: one Pixmap feeds both --dump PNG and the streamed kiosk frames.
