@@ -12,7 +12,7 @@ arch=('x86_64')
 # sqlite3 case. The crate's own release profile already sets opt-level.
 options=('!lto')
 url="https://git.corbet.ch/corbet-fsl/cksk"
-license=('LicenseRef-FSL-1.1-ALv2')
+license=('LGPL-3.0-only WITH LGPL-3.0-linking-exception')
 depends=()
 makedepends=('cargo' 'git')
 provides=('cksk')
