@@ -293,10 +293,12 @@ fn run_client_with<S, F>(
 {
     let mut backoff = INITIAL_BACKOFF;
     let mut attempts = 0usize;
+    let mut failures = FailureLog::default();
     loop {
         let connected = Instant::now();
         let reason = match connect_and_stream(socket_path, show, size) {
             Ok(()) => {
+                failures.reset(); // the connect succeeded; the next failure is news again
                 eprintln!("cksk: disconnected from clck; reconnecting");
                 if connected.elapsed() >= MAX_BACKOFF {
                     backoff = INITIAL_BACKOFF; // a connection that actually lasted resets the backoff
@@ -304,7 +306,9 @@ fn run_client_with<S, F>(
                 RetryReason::Disconnected
             }
             Err(e) => {
-                eprintln!("cksk: connect to {} failed: {e}", socket_path.display());
+                if failures.should_log(e.kind()) {
+                    eprintln!("cksk: connect to {} failed: {e}", socket_path.display());
+                }
                 RetryReason::ConnectFailed
             }
         };
@@ -314,6 +318,25 @@ fn run_client_with<S, F>(
         }
         sleep(backoff);
         backoff = (backoff * 2).min(MAX_BACKOFF);
+    }
+}
+
+/// Suppresses repeated identical connect failures: the first failure and every change of error
+/// kind are logged, retries with the same kind stay quiet until a connect succeeds (`reset`).
+#[derive(Default)]
+struct FailureLog {
+    last: Option<std::io::ErrorKind>,
+}
+
+impl FailureLog {
+    fn should_log(&mut self, kind: std::io::ErrorKind) -> bool {
+        let fresh = self.last != Some(kind);
+        self.last = Some(kind);
+        fresh
+    }
+
+    fn reset(&mut self) {
+        self.last = None;
     }
 }
 
@@ -386,6 +409,19 @@ fn pam_frame(pm: &tiny_skia::Pixmap) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn failure_log_logs_first_and_changes_only() {
+        use std::io::ErrorKind::{ConnectionRefused, NotFound};
+        let mut log = FailureLog::default();
+        assert!(log.should_log(NotFound));
+        assert!(!log.should_log(NotFound));
+        assert!(!log.should_log(NotFound));
+        assert!(log.should_log(ConnectionRefused));
+        assert!(!log.should_log(ConnectionRefused));
+        log.reset();
+        assert!(log.should_log(ConnectionRefused));
+    }
+
     use super::*;
     use std::fs;
     use std::io::{BufRead, BufReader, Read};
