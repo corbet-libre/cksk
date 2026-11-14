@@ -4,8 +4,8 @@ version = "0.2.0"
 edition = "2021"
 license = "LGPL-3.0-only WITH LGPL-3.0-linking-exception"
 description = "Server-monitor boards for a clck kiosk display: polls status sources, renders big-type status screens, streams frames to the display server"
-repository = "https://git.corbet.ch/corbet-fsl/cksk"
-homepage = "https://git.corbet.ch/corbet-fsl/cksk"
+repository = "https://git.corbet.ch/corbet-libre/cksk"
+homepage = "https://git.corbet.ch/corbet-libre/cksk"
 
 # The board model+render are a [lib] so a future web build can reuse them without pulling
 # in any display-server code at all.
