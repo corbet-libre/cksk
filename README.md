@@ -57,4 +57,4 @@ fallback): `gatus_url`, `socket_path`, `size` (`"1920x1080"`), optional `host_fe
 see itself; missing/stale reads as pending rows; see `contrib/host-collector/` for the
 privileged feed script). Then `GATUS_URL` / `CLCK_SOCKET`, then built-in defaults.
 
-License: FSL-1.1-ALv2, see `LICENSE.md`.
+License: LGPL-3.0-only WITH LGPL-3.0-linking-exception, see `LICENSE.md`.

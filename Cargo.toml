@@ -2,7 +2,7 @@
 name = "cksk"
 version = "0.2.0"
 edition = "2021"
-license = "FSL-1.1-ALv2"
+license = "LGPL-3.0-only WITH LGPL-3.0-linking-exception"
 description = "Server-monitor boards for a clck kiosk display: polls status sources, renders big-type status screens, streams frames to the display server"
 repository = "https://git.corbet.ch/corbet-fsl/cksk"
 homepage = "https://git.corbet.ch/corbet-fsl/cksk"
