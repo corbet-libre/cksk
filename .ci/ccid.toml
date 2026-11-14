@@ -13,7 +13,7 @@ crates = "."
 [release]
 kind = "library"
 version = "Cargo.toml"
-registries = ["crates"]
+registries = ["crates", "aur"]
 build = ["pack"]
 
 [render]
