@@ -120,7 +120,13 @@ pub fn render_overview(
             .iter()
             .filter(|&&ei| eps[ei].up() == Some(false))
             .count();
-        let dot = if down > 0 { chrome::RED } else { chrome::GREEN };
+        let dot = if down > 0 {
+            chrome::RED
+        } else if up > 0 {
+            chrome::GREEN
+        } else {
+            chrome::FAINT // no data: never green
+        };
         let row = grid.at_y(y, row_h);
         // Name block: dot + title share one line box, dot on the measured cap-center.
         let name_top = y + (row_h - H2.lh) / 2.0;

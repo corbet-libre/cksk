@@ -58,6 +58,10 @@ struct FileConfig {
     /// system board. Written by a privileged collector outside this process
     /// (cksk itself stays unprivileged); absent file reads as pending rows.
     host_feed: Option<String>,
+    /// With a `ws(s)://` `gatus_url` (the relay's MQTT broker): the login of the internal tree
+    /// and a file holding its password (first line). Never the password itself.
+    relay_user: Option<String>,
+    relay_password_file: Option<String>,
     /// The render size, `WxH` (e.g. `"1920x1080"`); `--size` wins over it.
     size: Option<String>,
 }
@@ -158,6 +162,8 @@ struct Resolved {
     gatus_url: String,
     socket_path: PathBuf,
     host_feed: Option<String>,
+    relay_user: Option<String>,
+    relay_password_file: Option<String>,
     size: (u32, u32),
 }
 
@@ -184,6 +190,8 @@ fn resolve_config() -> Resolved {
         gatus_url,
         socket_path,
         host_feed: file.host_feed,
+        relay_user: file.relay_user,
+        relay_password_file: file.relay_password_file,
         size,
     }
 }
@@ -214,7 +222,12 @@ fn main() {
         let feed = arg("--feed").or(file.host_feed.clone());
 
         let (w, h) = resolve_size(&file);
-        let show = Show::with_feed(source, feed);
+        let show = Show::with_relay_login(
+            source,
+            feed,
+            file.relay_user.clone(),
+            file.relay_password_file.clone(),
+        );
         let pm = show.render_named(&screen, w, h).unwrap_or_else(|e| {
             eprintln!("cksk: --dump --screen {screen}: {e}");
             std::process::exit(2);
@@ -233,7 +246,12 @@ fn main() {
         let source = arg("--source").unwrap_or(gatus_url);
         let feed = arg("--feed").or(file.host_feed.clone());
         let (w, h) = resolve_size(&file);
-        let show = Show::with_feed(source, feed);
+        let show = Show::with_relay_login(
+            source,
+            feed,
+            file.relay_user.clone(),
+            file.relay_password_file.clone(),
+        );
         std::fs::create_dir_all(&dir).unwrap_or_else(|e| {
             eprintln!("cksk: create {dir}: {e}");
             std::process::exit(2);
@@ -268,7 +286,12 @@ fn main() {
         resolved.gatus_url,
         resolved.socket_path.display()
     );
-    let show = Show::with_feed(resolved.gatus_url, resolved.host_feed);
+    let show = Show::with_relay_login(
+        resolved.gatus_url,
+        resolved.host_feed,
+        resolved.relay_user,
+        resolved.relay_password_file,
+    );
     run_client(&resolved.socket_path, &show, resolved.size);
 }
 

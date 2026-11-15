@@ -15,6 +15,7 @@ pub mod groups;
 pub mod layout;
 pub mod model;
 pub mod overview;
+pub mod relay;
 pub mod show;
 pub mod system;
 

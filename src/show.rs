@@ -203,8 +203,31 @@ impl Show {
     }
 
     pub fn with_feed(gatus_source: String, host_feed: Option<String>) -> Self {
+        Self::with_relay_login(gatus_source, host_feed, None, None)
+    }
+
+    /// A `ws://` or `wss://` source is the relay's MQTT broker (the internal tree needs the
+    /// login); anything else is a Gatus statuses URL or file.
+    pub fn with_relay_login(
+        gatus_source: String,
+        host_feed: Option<String>,
+        user: Option<String>,
+        password_file: Option<String>,
+    ) -> Self {
+        let gatus = if gatus_source.starts_with("ws://") || gatus_source.starts_with("wss://") {
+            let password = password_file
+                .and_then(|f| std::fs::read_to_string(f).ok())
+                .map(|s| s.lines().next().unwrap_or("").trim().to_string());
+            GatusSource::from_relay(crate::relay::RelayConfig {
+                url: gatus_source,
+                user,
+                password,
+            })
+        } else {
+            GatusSource::new(gatus_source)
+        };
         Show {
-            gatus: GatusSource::new(gatus_source),
+            gatus,
             sys: SysState::with_feed(host_feed),
             fonts: load_fonts(),
         }

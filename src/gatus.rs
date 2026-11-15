@@ -16,6 +16,7 @@ pub struct GatusSource {
     data: Arc<Mutex<Vec<Endpoint>>>,
     version: Arc<AtomicU64>,
     updated: Arc<Mutex<Option<Instant>>>,
+    relay: Option<Arc<crate::relay::Shared>>,
 }
 
 impl GatusSource {
@@ -23,6 +24,28 @@ impl GatusSource {
     /// background thread that re-polls it every 15s into the shared `Mutex`. A failed poll
     /// (network hiccup, bad JSON) logs to stderr and leaves the previous data in place -- an
     /// endpoint list is more useful stale than replaced by nothing.
+    /// The relay feed (`relay_url` in the config): the same retained tiles the web client reads.
+    pub fn from_relay(cfg: crate::relay::RelayConfig) -> Self {
+        let shared = Arc::new(crate::relay::Shared {
+            data: Mutex::new(Vec::new()),
+            version: AtomicU64::new(0),
+            updated: Mutex::new(None),
+        });
+        crate::relay::spawn(cfg, Arc::clone(&shared));
+        // Like the polled source: give the first render data when the relay answers promptly.
+        let t0 = Instant::now();
+        while shared.updated.lock().unwrap().is_none() && t0.elapsed() < Duration::from_secs(8) {
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        std::thread::sleep(Duration::from_millis(300)); // the retained tiles follow `_online`
+        GatusSource {
+            data: Arc::new(Mutex::new(Vec::new())),
+            version: Arc::new(AtomicU64::new(0)),
+            updated: Arc::new(Mutex::new(None)),
+            relay: Some(shared),
+        }
+    }
+
     pub fn new(source: String) -> Self {
         let initial = model::load(&source).unwrap_or_else(|e| {
             eprintln!("cksk: initial load failed: {e}");
@@ -52,11 +75,15 @@ impl GatusSource {
             data,
             version,
             updated,
+            relay: None,
         }
     }
 
     /// Seconds since the last successful poll, if any poll ever succeeded.
     pub fn data_age_secs(&self) -> Option<u64> {
+        if let Some(r) = &self.relay {
+            return r.updated.lock().unwrap().map(|t| t.elapsed().as_secs());
+        }
         self.updated.lock().unwrap().map(|t| t.elapsed().as_secs())
     }
 
@@ -68,11 +95,17 @@ impl GatusSource {
 
     /// Current data version -- compare against a previously observed value to detect a refresh.
     pub fn version(&self) -> u64 {
+        if let Some(r) = &self.relay {
+            return r.version.load(Ordering::Relaxed);
+        }
         self.version.load(Ordering::Relaxed)
     }
 
     /// One cheap clone of the current endpoint list per frame; 64 small structs at 1fps.
     pub fn snapshot(&self) -> Vec<Endpoint> {
+        if let Some(r) = &self.relay {
+            return r.data.lock().unwrap().clone();
+        }
         self.data.lock().unwrap().clone()
     }
 
