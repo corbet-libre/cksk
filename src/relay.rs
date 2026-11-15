@@ -26,10 +26,13 @@ pub struct RelayConfig {
     pub password: Option<String>,
 }
 
+/// (kind, title, [(tile id, tile title)]) of one screen.
+type ScreenLayout = (String, String, Vec<(String, String)>);
+
 #[derive(Default)]
 struct State {
     /// screen -> (kind, title, [(tile id, tile title)])
-    layouts: HashMap<String, (String, String, Vec<(String, String)>)>,
+    layouts: HashMap<String, ScreenLayout>,
     /// (screen, tile) -> tile state (`s` of the tile message)
     tiles: HashMap<(String, String), String>,
     /// Interval of the last `online` message and when it arrived.
